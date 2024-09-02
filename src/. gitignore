@@ -1,0 +1,41 @@
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+
+# Compiled output
+/target/
+/build/
+/dist/
+
+# Dependency directories
+node_modules/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment variables and configuration
+.env
+*.properties
+application.yml
+application.yaml
+
+# Exclude sensitive data files
+**/src/main/resources/application.properties
+**/src/main/resources/application.yml
+**/src/main/resources/application.yaml
+
+# React
+/build
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
