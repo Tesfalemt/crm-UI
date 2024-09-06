@@ -25,13 +25,22 @@ const apiService = {
     }
   },
 
-  getAuthToken: () => {
-    return localStorage.getItem('token');
+  login: async (email, password) => {
+    try {
+      const response = await apiService.axiosInstance.post('/auth/login', { username: email, password });
+      console.log('Login response:', response.data);
+      const { token } = response.data;
+      apiService.setAuthToken(token);
+      return response.data;
+    } catch (error) {
+      console.error('Login error:', error.response ? error.response.data : error.message);
+      throw error;
+    }
   },
 
-  register: async (email, password) => {
+  register: async (email, username, password) => {
     try {
-      const response = await apiService.axiosInstance.post('/auth/register', { email, password });
+      const response = await apiService.axiosInstance.post('/auth/register', { email, username, password });
       console.log('Registration response:', response.data);
       return response.data;
     } catch (error) {
@@ -40,19 +49,9 @@ const apiService = {
     }
   },
 
-  login: async (email, password) => {
-    try {
-      const response = await apiService.axiosInstance.post('/auth/login', { username: email, password });
-      console.log('Login response:', response.data);
-      const { jwt } = response.data;
-      apiService.setAuthToken(jwt);
-      return response.data;
-    } catch (error) {
-      console.error('Login error:', error.response ? error.response.data : error.message);
-      throw error;
-    }
+  getAuthToken: () => {
+    return localStorage.getItem('token');
   },
-
   logout: () => {
     apiService.setAuthToken(null);
   },
@@ -71,22 +70,34 @@ const apiService = {
     }
   },
 
-    fetchParkingSpaces: async () => {
+  fetchParkingSpaces: async () => {
     try {
+      console.log('Fetching parking spaces...');
       const token = apiService.getAuthToken();
       if (!token) {
+        console.error('No auth token found');
         throw new Error('No auth token found');
       }
-      apiService.setAuthToken(token);  // Ensure the token is set for this request
+      console.log('Token found, setting auth header');
+      apiService.setAuthToken(token);
+      console.log('Making request to:', `${API_URL}/parkinglots/spaces`);
       const response = await apiService.axiosInstance.get('/parkinglots/spaces');
+      console.log('Response received:', response);
       return response.data;
     } catch (error) {
-      console.error('Error fetching parking spaces:', error);
+      console.error('Error in fetchParkingSpaces:', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        console.error('Response headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Error setting up request:', error.message);
+      }
       throw error;
     }
   },
-
-  // ... other methods ...
 };
 
 export default apiService;

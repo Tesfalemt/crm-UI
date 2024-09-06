@@ -213,14 +213,22 @@ const ParkingLotInfo = ({ location, pricing }) => {
 
   const fetchParkingSpaces = async () => {
     try {
+      setIsLoading(true);
+      setError(null);
+      console.log('Attempting to fetch parking spaces...');
       const spaces = await apiService.fetchParkingSpaces();
+      console.log('Spaces fetched:', spaces);
       setParkingSpaces(spaces);
       setIsLoading(false);
+      
+      if (spaces.length > 0 && spaces[0].id === 1) {
+        toast.success('Default parking spaces created successfully!');
+      }
     } catch (error) {
-      console.error('Error fetching parking spaces:', error);
-      setError('Failed to load parking spaces. Please try again later.');
+      console.error('Error in fetchParkingSpaces:', error);
+      setError(error.message || 'An unexpected error occurred');
       setIsLoading(false);
-      toast.error('Error loading parking spaces');
+      toast.error(`Error loading parking spaces: ${error.message}`);
     }
   };
 
