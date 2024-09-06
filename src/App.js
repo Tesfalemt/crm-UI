@@ -15,10 +15,14 @@ function AppContent() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('Initializing ApiService');
     apiService.init();
     const token = apiService.getAuthToken();
     if (token) {
+      console.log('Token found, setting authenticated state');
       setIsAuthenticated(true);
+    } else {
+      console.log('No token found, user is not authenticated');
     }
   }, [setIsAuthenticated]);
   

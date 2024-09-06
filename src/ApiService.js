@@ -8,65 +8,51 @@ const apiService = {
   }),
 
   init: () => {
-    // If there's any initialization needed, put it here
-    console.log('ApiService initialized');
+    console.log('Initializing ApiService');
     const token = localStorage.getItem('token');
     if (token) {
+      console.log('Token found in localStorage, setting auth header');
       apiService.setAuthToken(token);
+    } else {
+      console.log('No token found in localStorage');
     }
   },
+
   setAuthToken: (token) => {
     if (token) {
-      apiService.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.log('Setting auth token in headers and localStorage');
+      const bearerToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      apiService.axiosInstance.defaults.headers.common['Authorization'] = bearerToken;
       localStorage.setItem('token', token);
     } else {
+      console.log('Removing auth token from headers and localStorage');
       delete apiService.axiosInstance.defaults.headers.common['Authorization'];
       localStorage.removeItem('token');
     }
   },
 
+  getAuthToken: () => {
+    const token = localStorage.getItem('token');
+    console.log('Retrieved token from localStorage:', token ? 'Token exists' : 'No token found');
+    return token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : null;
+  },
+
   login: async (email, password) => {
     try {
+      console.log('Attempting login for email:', email);
       const response = await apiService.axiosInstance.post('/auth/login', { username: email, password });
       console.log('Login response:', response.data);
-      const { token } = response.data;
-      apiService.setAuthToken(token);
+      const { jwt } = response.data;
+      if (jwt) {
+        apiService.setAuthToken(jwt);
+        console.log('Token set after successful login');
+      } else {
+        console.warn('No token received in login response');
+      }
       return response.data;
     } catch (error) {
       console.error('Login error:', error.response ? error.response.data : error.message);
       throw error;
-    }
-  },
-
-  register: async (email, username, password) => {
-    try {
-      const response = await apiService.axiosInstance.post('/auth/register', { email, username, password });
-      console.log('Registration response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Registration error:', error.response ? error.response.data : error.message);
-      throw error;
-    }
-  },
-
-  getAuthToken: () => {
-    return localStorage.getItem('token');
-  },
-  logout: () => {
-    apiService.setAuthToken(null);
-  },
-
-  handleError: (error) => {
-    if (error.response) {
-      console.error('Error response:', error.response);
-      console.error('Error response data:', error.response.data);
-      throw new Error(error.response.data.message || `Request failed with status ${error.response.status}. ${error.response.data}`);
-    } else if (error.request) {
-      console.error('Error request:', error.request);
-      throw new Error('No response from server. Please try again later.');
-    } else {
-      console.error('Error:', error.message);
-      throw new Error('An error occurred. Please try again.');
     }
   },
 
@@ -76,24 +62,19 @@ const apiService = {
       const token = apiService.getAuthToken();
       if (!token) {
         console.error('No auth token found');
-        throw new Error('No auth token found');
+        throw new Error('No auth token found. Please log in again.');
       }
-      console.log('Token found, setting auth header');
-      apiService.setAuthToken(token);
+      console.log('Token found, ensuring auth header is set');
+      apiService.setAuthToken(token);  // This will ensure the header is set with the correct format
       console.log('Making request to:', `${API_URL}/parkinglots/spaces`);
       const response = await apiService.axiosInstance.get('/parkinglots/spaces');
-      console.log('Response received:', response);
+      console.log('Parking spaces response received:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error in fetchParkingSpaces:', error);
+      console.error('Error fetching parking spaces:', error);
       if (error.response) {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
-        console.error('Response headers:', error.response.headers);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-      } else {
-        console.error('Error setting up request:', error.message);
       }
       throw error;
     }

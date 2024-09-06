@@ -40,10 +40,15 @@ const InputField = ({ id, label, type, value, onChange, icon: Icon }) => (
           console.log("Attempting login with:", { username: email, password });
           const data = await apiService.login(email, password);
           console.log("Login response:", data);
-          setIsAuthenticated(true);
-          navigate("/dashboard");
-          toast.success("Logged in successfully!");
-        } else {
+          if (data.jwt) {
+            apiService.setAuthToken(data.jwt);
+            setIsAuthenticated(true);
+            navigate("/dashboard");
+            toast.success("Logged in successfully!");
+          } else {
+            throw new Error("No token received from server");
+          }
+        }else {
           if (password !== confirmPassword) {
             throw new Error("Passwords don't match");
           }
