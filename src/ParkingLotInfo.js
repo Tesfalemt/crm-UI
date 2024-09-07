@@ -3,12 +3,14 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { loadStripe } from '@stripe/stripe-js';
 import apiService from "./ApiService.js";
 import { toast } from 'react-hot-toast';
+import UserManagementModal from './UserManagementModal';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const TermsAndConditions = ({ onAccept, onDecline }) => {
-  const [accepted, setAccepted] = useState(false);
+const [accepted, setAccepted] = useState(false);
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -240,6 +242,9 @@ const ParkingLotInfo = ({ location, pricing , isAdmin}) => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchedUser, setSearchedUser] = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [modalMode, setModalMode] = useState('add');
 
   useEffect(() => {
     fetchParkingSpaces();
@@ -265,6 +270,49 @@ const ParkingLotInfo = ({ location, pricing , isAdmin}) => {
       toast.error(`Error loading parking spaces: ${error.message}`);
     }
   };
+
+
+const handleAddUser = () => {
+  setSelectedUser(null);
+  setModalMode('add');
+  setShowUserModal(true);
+};
+
+const handleEditUser = (user) => {
+  setSelectedUser(user);
+  setModalMode('edit');
+  setShowUserModal(true);
+};
+
+const handleDeleteUser = (user) => {
+  setSelectedUser(user);
+  setModalMode('delete');
+  setShowUserModal(true);
+};
+
+const handleCloseUserModal = () => {
+  setShowUserModal(false);
+  setSelectedUser(null);
+};
+
+const handleUserAction = async (userData) => {
+  try {
+    if (modalMode === 'add') {
+      await apiService.registerUser(userData);
+      toast.success('User added successfully');
+    } else if (modalMode === 'edit') {
+      await apiService.updateUser(selectedUser.id, userData);
+      toast.success('User updated successfully');
+    } else if (modalMode === 'delete') {
+      await apiService.deleteUser(selectedUser.id);
+      toast.success('User deleted successfully');
+    }
+    handleCloseUserModal();
+    // Refresh user list or update state as needed
+  } catch (error) {
+    toast.error(`Failed to ${modalMode} user: ${error.message}`);
+  }
+};
 
   const handleSpaceClick = (spaceId) => {
     setSelectedSpace(spaceId);
@@ -336,14 +384,23 @@ const ParkingLotInfo = ({ location, pricing , isAdmin}) => {
         <div className="error">{error}</div>
       ) : (
         <>
-          <div className="parking-header">
+          <div className="user-management-section" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2>{location} Parking Lot</h2>
+            <div className="user-management-buttons" style={{ display: 'flex', gap: '1rem' }}>
+              <button className="action-button" onClick={handleAddUser}>Add User</button>
+              <button className="action-button" onClick={() => handleEditUser(searchedUser)} disabled={!searchedUser}>Edit User</button>
+              <button className="action-button" onClick={() => handleDeleteUser(searchedUser)} disabled={!searchedUser}>Delete User</button>
+            </div>
+          </div>
+  
+          <div className="parking-header">
             <div className="parking-summary">
               <p><strong>Available Spaces:</strong> {parkingSpaces.filter(space => space.status === 'Available').length}</p>
               <p><strong>Booked Spaces:</strong> {parkingSpaces.filter(space => space.status !== 'Available').length}</p>
               <p><strong>Pricing:</strong> {pricing}</p>
             </div>
           </div>
+  
           <div className="parking-lot-container">
             <div className="parking-lot">
               {renderParkingRow(0, 19)}
@@ -356,6 +413,16 @@ const ParkingLotInfo = ({ location, pricing , isAdmin}) => {
             </div>
           </div>
           
+          {showUserModal && (
+            <UserManagementModal
+              mode={modalMode}
+              user={selectedUser}
+              onClose={handleCloseUserModal}
+              onSubmit={handleUserAction}
+              availableSpaces={parkingSpaces.filter(space => space.status === 'Available').length}
+            />
+          )}
+          
           {selectedSpaceDetails && (
             <div className="space-details">
               <h3>Space {selectedSpaceDetails.spaceNumber}</h3>
@@ -365,7 +432,7 @@ const ParkingLotInfo = ({ location, pricing , isAdmin}) => {
                   <button className="action-button" onClick={handleBookNow}>
                     Book Now
                   </button>
-                  {isAdmin && <UserSearch onUserSelect={handleUserSelect} />}
+                  <UserSearch onUserSelect={handleUserSelect} />
                 </>
               )}
               {showTerms && (

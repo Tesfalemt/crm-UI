@@ -75,13 +75,66 @@ const apiService = {
     throw error;
   },
 
-  registerUser: async (userInfo) => {
+  registerUser: async (userData) => {
     try {
-      apiService.ensureToken();
-      const response = await apiService.axiosInstance.post('/auth/register', userInfo);
-      return response.data;
+      console.log('Sending registration request with data:', userData);
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      const responseText = await response.text();
+      console.log('Raw server response:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing JSON:', parseError);
+        if (response.ok) {
+          return { message: 'User registered successfully' };
+        } else {
+          throw new Error(`Server response is not valid JSON: ${responseText}`);
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      return data;
     } catch (error) {
-      return apiService.handleApiError(error);
+      console.error('Registration error:', error);
+      throw error;
+    }
+  },
+
+  registerUserByAdmin: async (userData, token) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/admin/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData || 'Admin registration failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Admin registration error:', error);
+      throw error;
     }
   },
 
