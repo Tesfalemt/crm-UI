@@ -16,6 +16,27 @@ const apiService = {
     } else {
       console.log('No token found in localStorage');
     }
+    apiService.axiosInstance.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        if (error.response.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            const refreshedToken = await apiService.refreshToken();
+            apiService.setAuthToken(refreshedToken);
+            originalRequest.headers['Authorization'] = `Bearer ${refreshedToken}`;
+            return apiService.axiosInstance(originalRequest);
+          } catch (refreshError) {
+            console.error('Error refreshing token:', refreshError);
+            apiService.setAuthToken(null);
+            // Redirect to login page or handle as needed
+            throw refreshError;
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
   },
 
   setAuthToken: (token) => {
@@ -37,6 +58,53 @@ const apiService = {
     return token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : null;
   },
 
+  ensureToken: () => {
+    const token = apiService.getAuthToken();
+    if (!token) {
+      throw new Error('No auth token found. Please log in again.');
+    }
+    apiService.setAuthToken(token);
+  },
+
+  handleApiError: (error) => {
+    console.error('API Error:', error);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Response status:', error.response.status);
+    }
+    throw error;
+  },
+
+  registerUser: async (userInfo) => {
+    try {
+      apiService.ensureToken();
+      const response = await apiService.axiosInstance.post('/auth/register', userInfo);
+      return response.data;
+    } catch (error) {
+      return apiService.handleApiError(error);
+    }
+  },
+
+  searchUsers: async (email) => {
+    try {
+      apiService.ensureToken();
+      const response = await apiService.axiosInstance.get(`/users/search?email=${email}`);
+      return response.data;
+    } catch (error) {
+      return apiService.handleApiError(error);
+    }
+  },
+
+  checkAdminStatus: async () => {
+    try {
+      apiService.ensureToken();
+      const response = await apiService.axiosInstance.get('/auth/check-admin');
+      return response.data.isAdmin;
+    } catch (error) {
+      return apiService.handleApiError(error);
+    }
+  },
+  
   login: async (email, password) => {
     try {
       console.log('Attempting login for email:', email);
@@ -51,31 +119,34 @@ const apiService = {
       }
       return response.data;
     } catch (error) {
-      console.error('Login error:', error.response ? error.response.data : error.message);
-      throw error;
+      return apiService.handleApiError(error);
     }
   },
 
   fetchParkingSpaces: async () => {
     try {
       console.log('Fetching parking spaces...');
-      const token = apiService.getAuthToken();
-      if (!token) {
-        console.error('No auth token found');
-        throw new Error('No auth token found. Please log in again.');
-      }
-      console.log('Token found, ensuring auth header is set');
-      apiService.setAuthToken(token);  // This will ensure the header is set with the correct format
+      apiService.ensureToken();
       console.log('Making request to:', `${API_URL}/parkinglots/spaces`);
       const response = await apiService.axiosInstance.get('/parkinglots/spaces');
       console.log('Parking spaces response received:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching parking spaces:', error);
-      if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-      }
+      return apiService.handleApiError(error);
+    }
+  },
+  refreshToken: async () => {
+    const currentToken = apiService.getAuthToken();
+    if (!currentToken) {
+      throw new Error('No token to refresh');
+    }
+    try {
+      const response = await apiService.axiosInstance.post('/auth/refresh', {}, {
+        headers: { 'Authorization': currentToken }
+      });
+      return response.data.jwt;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
       throw error;
     }
   },

@@ -141,12 +141,6 @@ main {
   z-index: 1;
 }
 
-/* Additional styles for better visibility */
-.parking-lot-info h2 {
-  font-size: 2rem;
-  color: #2c3e50;
-  margin-bottom: 1rem;
-}
 
 .parking-info {
   display: flex;
@@ -640,4 +634,47 @@ footer {
 
 .input-field + .input-field {
   margin-top: 1rem;
+}
+
+.parking-lot-info {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.parking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.parking-header h2 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.parking-summary {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.parking-summary p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.parking-lot-container {
+  margin-top: 2rem;
+  padding: 2rem;
+  background-color: #2c3e50;
+  border-radius: 12px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
 }

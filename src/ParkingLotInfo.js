@@ -196,8 +196,41 @@ const PaymentForm = ({ spaceNumber, userInfo, onPaymentSuccess, onSpaceBooked })
   );
 };
 
+const UserSearch = ({ onUserSelect }) => {
+  const [email, setEmail] = useState('');
+  const [user, setUser] = useState(null);
+
+  const handleSearch = async () => {
+    try {
+      const foundUser = await apiService.searchUserByEmail(email);
+      setUser(foundUser);
+      onUserSelect(foundUser);
+    } catch (error) {
+      toast.error(`User not found: ${error.message}`);
+    }
+  };
+
+  return (
+    <div className="user-search">
+      <input 
+        type="email" 
+        value={email} 
+        onChange={(e) => setEmail(e.target.value)} 
+        placeholder="Search user by email"
+      />
+      <button onClick={handleSearch}>Search</button>
+      {user && (
+        <div className="user-details">
+          <p>Name: {user.firstName} {user.lastName}</p>
+          <p>Phone: {user.phoneNumber}</p>
+          <p>Address: {user.address}</p>
+        </div>
+      )}
+    </div>
+  );
+};
   
-const ParkingLotInfo = ({ location, pricing }) => {
+const ParkingLotInfo = ({ location, pricing , isAdmin}) => {
   const [parkingSpaces, setParkingSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [showTerms, setShowTerms] = useState(false);
@@ -206,6 +239,7 @@ const ParkingLotInfo = ({ location, pricing }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchedUser, setSearchedUser] = useState(null);
 
   useEffect(() => {
     fetchParkingSpaces();
@@ -238,6 +272,14 @@ const ParkingLotInfo = ({ location, pricing }) => {
     setShowUserForm(false);
     setShowPaymentForm(false);
     setUserInfo(null);
+    setSearchedUser(null);
+  };
+  
+  const handleUserSelect = (user) => {
+    setSearchedUser(user);
+    setUserInfo(user);
+    setShowUserForm(false);
+    setShowPaymentForm(true);
   };
 
   const handleBookNow = () => {
@@ -294,7 +336,14 @@ const ParkingLotInfo = ({ location, pricing }) => {
         <div className="error">{error}</div>
       ) : (
         <>
-          <h2>{location} Parking Lot</h2>
+          <div className="parking-header">
+            <h2>{location} Parking Lot</h2>
+            <div className="parking-summary">
+              <p><strong>Available Spaces:</strong> {parkingSpaces.filter(space => space.status === 'Available').length}</p>
+              <p><strong>Booked Spaces:</strong> {parkingSpaces.filter(space => space.status !== 'Available').length}</p>
+              <p><strong>Pricing:</strong> {pricing}</p>
+            </div>
+          </div>
           <div className="parking-lot-container">
             <div className="parking-lot">
               {renderParkingRow(0, 19)}
@@ -307,19 +356,17 @@ const ParkingLotInfo = ({ location, pricing }) => {
             </div>
           </div>
           
-          <div className="parking-info">
-            <p><strong>Available Spaces:</strong> {parkingSpaces.filter(space => space.status === 'Available').length}</p>
-            <p><strong>Booked Spaces:</strong> {parkingSpaces.filter(space => space.status !== 'Available').length}</p>
-            <p><strong>Pricing:</strong> {pricing}</p>
-          </div>
           {selectedSpaceDetails && (
             <div className="space-details">
               <h3>Space {selectedSpaceDetails.spaceNumber}</h3>
               <p>Status: {selectedSpaceDetails.status}</p>
               {selectedSpaceDetails.status === 'Available' && !showTerms && !showUserForm && !showPaymentForm && (
-                <button className="action-button" onClick={handleBookNow}>
-                  Book Now
-                </button>
+                <>
+                  <button className="action-button" onClick={handleBookNow}>
+                    Book Now
+                  </button>
+                  {isAdmin && <UserSearch onUserSelect={handleUserSelect} />}
+                </>
               )}
               {showTerms && (
                 <TermsAndConditions 
@@ -327,18 +374,18 @@ const ParkingLotInfo = ({ location, pricing }) => {
                   onDecline={handleTermsDecline}
                 />
               )}
-              {showUserForm && (
+              {showUserForm && !searchedUser && (
                 <div className="payment-form-container">
                   <h3>User Information</h3>
                   <UserInfoForm onSubmit={handleUserInfoSubmit} />
                 </div>
               )}
-              {showPaymentForm && userInfo && (
+              {showPaymentForm && (searchedUser || userInfo) && (
                 <div className="payment-form-container">
                   <Elements stripe={stripePromise}>
                     <PaymentForm 
                       spaceNumber={selectedSpaceDetails.spaceNumber}
-                      userInfo={userInfo}
+                      userInfo={searchedUser || userInfo}
                       onPaymentSuccess={handlePaymentSuccess} 
                       onSpaceBooked={fetchParkingSpaces} 
                     />
