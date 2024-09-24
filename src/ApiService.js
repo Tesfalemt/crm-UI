@@ -39,6 +39,30 @@ const apiService = {
     );
   },
 
+  setupInterceptors: () => {
+    apiService.axiosInstance.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        if (error.response.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            const refreshedToken = await apiService.refreshToken();
+            apiService.setAuthToken(refreshedToken);
+            originalRequest.headers['Authorization'] = `Bearer ${refreshedToken}`;
+            return apiService.axiosInstance(originalRequest);
+          } catch (refreshError) {
+            console.error('Error refreshing token:', refreshError);
+            apiService.setAuthToken(null);
+            // Redirect to login page or handle as needed
+            throw refreshError;
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+  },
+
   setAuthToken: (token) => {
     if (token) {
       console.log('Setting auth token in headers and localStorage');
@@ -74,7 +98,38 @@ const apiService = {
     }
     throw error;
   },
+  addVehicle: async (vehicleData) => {
+    try {
+      const token = localStorage.getItem('token'); // Ensure you're storing the token in localStorage after login
+      if (token) {
+        apiService.setAuthToken(token);
+      }
+      const response = await apiService.axiosInstance.post('/vehicles', vehicleData);
+      return response.data;
+    } catch (error) {
+      console.error('Error in addVehicle:', error.response);
+      throw error;
+    }
+  },
+  getVehicleByVin: async (vin) => {
+    try {
+      apiService.ensureToken();
+      const response = await apiService.axiosInstance.get(`${API_URL}/vehicles/vin/${vin}`);
+      return response.data;
+    } catch (error) {
+      return apiService.handleApiError(error);
+    }
+  },
 
+  updateVehicleMileage: async (plateNumber, newMileage) => {
+    try {
+      apiService.ensureToken();
+      const response = await apiService.axiosInstance.patch(`${API_URL}/vehicles/${plateNumber}/mileage?newMileage=${newMileage}`);
+      return response.data;
+    } catch (error) {
+      return apiService.handleApiError(error);
+    }
+  },
   registerUser: async (userData) => {
     try {
       console.log('Sending registration request with data:', userData);
@@ -137,7 +192,63 @@ const apiService = {
       throw error;
     }
   },
+  registerUserWithPayment: async function(userData) {
+    try {
+      console.log('Sending request to:', `${API_URL}/auth/register`);
+      console.log('Request payload:', userData);
+      const response = await this.axiosInstance.post('/auth/register', userData);
+      console.log('Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in registerUserWithPayment:', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        console.error('Response headers:', error.response.headers);
+      }
+      throw error;
+    }
+  },
 
+  updateUserWithPayment: async function(userId, userData) {
+    try {
+      const response = await this.axiosInstance.put(`/auth/update/${userId}`, userData);
+      return response.data;
+    } catch (error) {
+      console.error('Error in updateUserWithPayment:', error);
+      throw error;
+    }
+  },
+
+  deleteUser: async function(userId) {
+    try {
+      const response = await this.axiosInstance.delete(`/auth/delete/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error in deleteUser:', error);
+      throw error;
+    }
+  },
+  getAllTransactions: async () => {
+    try {
+      apiService.ensureToken();
+      const response = await apiService.axiosInstance.get('/transactions');
+      return response.data;
+    } catch (error) {
+      return apiService.handleApiError(error);
+    }
+  },
+
+  addTransaction: async (transactionData) => {
+    try {
+      apiService.ensureToken();
+      const response = await apiService.axiosInstance.post('/transactions', transactionData);
+      return response.data;
+    } catch (error) {
+      return apiService.handleApiError(error);
+    }
+  },
+  
   searchUsers: async (email) => {
     try {
       apiService.ensureToken();

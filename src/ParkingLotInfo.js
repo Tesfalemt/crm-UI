@@ -397,7 +397,7 @@ const handleUserAction = async (userData) => {
             <div className="parking-summary">
               <p><strong>Available Spaces:</strong> {parkingSpaces.filter(space => space.status === 'Available').length}</p>
               <p><strong>Booked Spaces:</strong> {parkingSpaces.filter(space => space.status !== 'Available').length}</p>
-              <p><strong>Pricing:</strong> {pricing}</p>
+            
             </div>
           </div>
   

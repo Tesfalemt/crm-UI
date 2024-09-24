@@ -175,6 +175,40 @@ main {
   background-color: #2980b9;
 }
 
+.garage {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.action-button {
+  background-color: #303f9f;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+  background-color: #3949ab;
+}
+
+.action-button:disabled {
+  background-color: #bdbdbd;
+  cursor: not-allowed;
+}
 .action-button, .add-item-btn, .add-transaction-btn {
   background-color: #303f9f;
   color: white;
@@ -677,4 +711,153 @@ footer {
   margin-right: auto;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow-x: auto;
+}
+
+/* User Management Modal Styles */
+.user-management-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.user-management-content {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  padding: 2rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+.user-management-header {
+  margin-bottom: 1rem;
+}
+
+.user-management-header h3 {
+  font-size: 1.5rem;
+  color: #1d1d1f;
+  font-weight: 600;
+  margin: 0;
+}
+
+.user-management-form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.user-management-tabs {
+  display: flex;
+  border-bottom: 1px solid #d2d2d7;
+  margin-bottom: 1rem;
+}
+
+.tab-button {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #1d1d1f;
+  transition: all 0.2s;
+}
+
+.tab-button.active {
+  border-bottom-color: #0071e3;
+  color: #0071e3;
+}
+
+.user-management-tab-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 1rem;
+  margin-right: -1rem;
+}
+
+.user-management-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 1rem;
+}
+
+.user-management-input:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+}
+
+.user-management-vehicle-inputs {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-management-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #0071e3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+}
+
+.user-management-button:hover {
+  background-color: #0077ed;
+}
+
+.user-management-button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+.user-management-message {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.user-management-message.success {
+  background-color: #e8fff3;
+  color: #1d8348;
+}
+
+.user-management-message.error {
+  background-color: #fff2f2;
+  color: #d64141;
+}
+
+@media (max-width: 480px) {
+  .user-management-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+  
+  .tab-button {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
 }
